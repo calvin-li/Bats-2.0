@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
 import android.os.BatteryManager;
 import android.os.SystemClock;
 import android.support.v4.app.NotificationCompat;
@@ -81,6 +82,7 @@ public class Notification extends BroadcastReceiver {
         }
 
         int icon = context.getResources().getIdentifier("a" + level, "mipmap", context.getPackageName());
+
         batteryInfoBuilder
                 .setSmallIcon(icon)
                 .setContentTitle(notificationTitle)
