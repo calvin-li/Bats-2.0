@@ -4,19 +4,17 @@ import android.app.AlarmManager
 import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.SystemClock
 import android.app.NotificationChannel
+import android.content.*
 
 
 class BatNotification : BroadcastReceiver() {
     companion object {
         const val notificationID = 23
         private const val channelId = "Battery status"
+        private const val chargePref = "Charging state"
 
         internal var manager: AlarmManager? = null
         internal var alarmPendingIntent: PendingIntent? = null
