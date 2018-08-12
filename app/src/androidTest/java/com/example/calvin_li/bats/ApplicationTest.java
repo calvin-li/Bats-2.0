@@ -1,4 +1,4 @@
-package com.example.calvin_li.bats_20;
+package com.example.calvin_li.bats;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;

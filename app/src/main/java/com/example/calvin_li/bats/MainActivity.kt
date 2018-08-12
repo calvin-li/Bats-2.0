@@ -1,4 +1,4 @@
-package com.example.calvin_li.bats_20
+package com.example.calvin_li.bats
 
 /**
  * Created by Calvin-PC on 7/20/2016.
