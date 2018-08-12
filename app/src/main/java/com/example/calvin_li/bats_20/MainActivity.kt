@@ -62,14 +62,7 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-    }
-
     companion object {
-
-        private val TAG = "com.example.calvin_li.bats_20.MainActivity"
-
         fun makeToast(message: String, context: Context) {
             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
         }
