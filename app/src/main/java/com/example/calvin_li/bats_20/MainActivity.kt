@@ -29,6 +29,8 @@ class MainActivity : AppCompatActivity() {
             mNotificationManager = this.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             mNotificationManager!!.cancel(BatNotification.notificationID)
         } else if (BatNotification.alarmPendingIntent == null) {
+            BatNotification.displayNotification(this)
+
             val alarmIntent = Intent(applicationContext, BatNotification::class.java)
             BatNotification.alarmPendingIntent = PendingIntent.getBroadcast(applicationContext, 0, alarmIntent, 0)
 
