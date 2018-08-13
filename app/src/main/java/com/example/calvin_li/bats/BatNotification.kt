@@ -12,27 +12,40 @@ import android.content.*
 
 class BatNotification : BroadcastReceiver() {
     companion object {
+        private const val statusCharging = "Charging"
+        private const val statusDischarging = "Discharging"
+        private const val statusFull = "Full"
+        private const val statusNotCharging = "Not charging"
+        private const val statusUnknown = "Status unknown"
+        private const val statusNotRecognized = "Status code not recognized"
+        private const val statusNull = "NULL"
+
         const val notificationID = 23
         private const val channelId = "Battery status"
-        private const val chargePref = "Charging state"
+        private const val lastStatus = "Last status"
+        private const val lastChange = "Last change"
 
         internal var manager: AlarmManager? = null
         internal var alarmPendingIntent: PendingIntent? = null
         internal const val updateInterval = 1000 * 60
 
-        private var batteryStatus: Intent? = null
-        private var charging: Boolean? = null
-        private var lastChange: Double = 0.0
-
         fun displayNotification(context: Context) {
-            batteryStatus = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+            val statusGetter =  context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
 
-            val level = getBatteryInfo(BatteryManager.EXTRA_LEVEL, context)
-            val plugged = plugToMessage(getBatteryInfo(BatteryManager.EXTRA_PLUGGED, context))
-            val status = statusToMessage(getBatteryInfo(BatteryManager.EXTRA_STATUS, context))
-            val temperature = getBatteryInfo(BatteryManager.EXTRA_TEMPERATURE, context) / 10.0
-            val voltage = getBatteryInfo(BatteryManager.EXTRA_VOLTAGE, context)
-            val time = formatTime()
+            val level = getBatteryInfo(BatteryManager.EXTRA_LEVEL, context, statusGetter)
+            val plugged = plugToMessage(getBatteryInfo(BatteryManager.EXTRA_PLUGGED, context, statusGetter))
+            val status = statusToMessage(getBatteryInfo(BatteryManager.EXTRA_STATUS, context, statusGetter))
+            val temperature = getBatteryInfo(BatteryManager.EXTRA_TEMPERATURE, context, statusGetter) / 10.0
+            val voltage = getBatteryInfo(BatteryManager.EXTRA_VOLTAGE, context, statusGetter)
+
+            val sharedPreferences = context.getSharedPreferences("Last charging state", Context.MODE_PRIVATE)
+            val prefEdit = sharedPreferences.edit()
+            prefEdit.putString(lastStatus, status)
+            if(sharedPreferences.getString(lastStatus, statusNull) != status){
+                prefEdit.putLong(lastChange, SystemClock.elapsedRealtime())
+            }
+            prefEdit.apply()
+            val time = formatTime(sharedPreferences.getLong(lastChange, SystemClock.elapsedRealtime()))
 
             val notificationManager =
                 context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -58,25 +71,22 @@ class BatNotification : BroadcastReceiver() {
             )
         }
 
-        private fun formatTime(): String {
+        private fun formatTime(lastUpdated: Long): String {
             var time = "Time formatting error"
-            val timeInMilli = SystemClock.elapsedRealtime() - lastChange.toLong()
+            val timeInMilli = SystemClock.elapsedRealtime() - lastUpdated
             val days = (timeInMilli / (1000 * 60 * 60 * 24)).toInt()
             val hours = (timeInMilli / (1000 * 60 * 60) % 24).toInt()
             val minutes = (timeInMilli / (1000 * 60) % 60).toInt()
             val secs = (timeInMilli / 1000 % 60).toInt()
             if (days > 0) {
-                val formatString = "%d:%02d:%02d:%02d"
-                time = String.format(formatString, days, hours, minutes, secs)
+                time = String.format("%d:%02d:%02d:%02d", days, hours, minutes, secs)
             } else if (days == 0) {
-                val formatString = "%d:%02d:%02d"
-                time = String.format(formatString, hours, minutes, secs)
+                time = String.format("%d:%02d:%02d", hours, minutes, secs)
             }
             return time
         }
 
         private fun plugToMessage(state: Int): String {
-            //TODO: put state into memory so it persists between alarms
             val ret = " "
             return when (state) {
                 BatteryManager.BATTERY_PLUGGED_AC -> "$ret(AC)"
@@ -87,56 +97,23 @@ class BatNotification : BroadcastReceiver() {
         }
 
         private fun statusToMessage(state: Int): String {
-            if (charging == null) {
-                charging = !(state == BatteryManager.BATTERY_STATUS_NOT_CHARGING || state == BatteryManager.BATTERY_STATUS_DISCHARGING)
-                lastChange = SystemClock.elapsedRealtime().toDouble()
-            }
-
-            when (state) {
-                BatteryManager.BATTERY_STATUS_CHARGING -> {
-                    if (!charging!!) {
-                        changeChargeState()
-                    }
-                    return "Charging"
-                }
-                BatteryManager.BATTERY_STATUS_DISCHARGING -> {
-                    if (charging!!) {
-                        changeChargeState()
-                    }
-                    return "Discharging"
-                }
-                BatteryManager.BATTERY_STATUS_FULL -> {
-                    if (!charging!!) {
-                        changeChargeState()
-                    }
-                    return "Full"
-                }
-                BatteryManager.BATTERY_STATUS_NOT_CHARGING -> {
-                    if (charging!!) {
-                        changeChargeState()
-                    }
-                    return "Not charging"
-                }
-                else -> return if (state == BatteryManager.BATTERY_STATUS_UNKNOWN) {
-                    "Status unknown"
-                } else
-                    "-1"
+            return when (state) {
+                BatteryManager.BATTERY_STATUS_CHARGING -> statusCharging
+                BatteryManager.BATTERY_STATUS_DISCHARGING -> statusDischarging
+                BatteryManager.BATTERY_STATUS_FULL -> statusFull
+                BatteryManager.BATTERY_STATUS_NOT_CHARGING -> statusNotCharging
+                BatteryManager.BATTERY_STATUS_UNKNOWN -> statusUnknown
+                else -> statusNotRecognized
             }
         }
 
-        private fun changeChargeState() {
-            charging = !charging!!
-            lastChange = SystemClock.elapsedRealtime().toDouble()
-        }
-
-        private fun getBatteryInfo(extra: String, context: Context): Int {
+        private fun getBatteryInfo(extra: String, context: Context, statusGetter: Intent): Int {
             val defaultValue = -1
-            val ret = batteryStatus!!.getIntExtra(extra, defaultValue)
-            val errorMessage = "Attribute $extra could not be fetched."
-            if (ret == defaultValue) {
-                MainActivity.makeToast(errorMessage, context.applicationContext)
+            val status = statusGetter.getIntExtra(extra, defaultValue)
+            if (status == defaultValue) {
+                MainActivity.makeToast("Attribute $extra could not be fetched.", context)
             }
-            return ret
+            return status
         }
     }
 
