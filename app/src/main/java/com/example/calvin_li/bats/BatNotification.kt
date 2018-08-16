@@ -53,8 +53,8 @@ class BatNotification : BroadcastReceiver() {
                 NotificationChannel(channelId, channelId, NotificationManager.IMPORTANCE_LOW))
 
             val icon = context.resources.getIdentifier("a$level", "mipmap", context.packageName)
-            val notificationTitle = "$status$plugged for $time"
-            val notificationText = temperature.toString() + "\u00b0C" + " , " + voltage + "mV"
+            val notificationTitle = temperature.toString() + "\u00b0C" + " • " + voltage + "mV"
+            val notificationText = "$status$plugged for $time"
             val resultPendingIntent =
                 PendingIntent.getActivity(context, 0, Intent(Intent.ACTION_POWER_USAGE_SUMMARY), 0)
 
