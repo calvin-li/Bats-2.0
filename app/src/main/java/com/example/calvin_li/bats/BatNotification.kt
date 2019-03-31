@@ -32,7 +32,7 @@ class BatNotification : BroadcastReceiver() {
         internal const val updateInterval = 1000 * 60
 
         fun displayNotification(context: Context) {
-            val statusGetter =  context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+            val statusGetter: Intent =  context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))!!
 
             val level = getBatteryInfo(BatteryManager.EXTRA_LEVEL, context, statusGetter)
             val plugged = plugToMessage(getBatteryInfo(BatteryManager.EXTRA_PLUGGED, context, statusGetter))
