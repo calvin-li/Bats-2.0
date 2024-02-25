@@ -23,7 +23,6 @@ class BatNotification : BroadcastReceiver() {
 
         const val notificationID = 23
         private const val channelId = "Battery status"
-        private const val channelId_time = "Minutes clock"
         private const val lastStatus = "Last status"
         private const val lastChange = "Last change"
 
@@ -53,8 +52,6 @@ class BatNotification : BroadcastReceiver() {
                 context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(
                 NotificationChannel(channelId, channelId, NotificationManager.IMPORTANCE_LOW))
-            notificationManager.createNotificationChannel(
-                NotificationChannel(channelId_time, channelId_time, NotificationManager.IMPORTANCE_LOW))
 
             val icon = context.resources.getIdentifier("a$level", "mipmap", context.packageName)
             val notificationTitle = temperature.toString() + "\u00b0C" + " • " + voltage + "mV"
@@ -63,22 +60,18 @@ class BatNotification : BroadcastReceiver() {
                 PendingIntent.getActivity(context, 0, Intent(Intent.ACTION_POWER_USAGE_SUMMARY),
                     PendingIntent.FLAG_IMMUTABLE)
 
-            val minutes = LocalDateTime.now().minute
-            val clock = context.resources.getIdentifier("a$minutes", "mipmap", context.packageName)
+            notificationManager.notify(
+                notificationID,
+                Notification.Builder(context, channelId)
+                    .setOngoing(true)
+                    .setShowWhen(false)
+                    .setSmallIcon(icon)
+                    .setContentTitle(notificationTitle)
+                    .setContentText(notificationText)
+                    .setContentIntent(resultPendingIntent)
+                    .build()
+            )
 
-            listOf(Pair(channelId, icon), Pair(channelId_time, clock)).map {
-                notificationManager.notify(
-                    notificationID,
-                    Notification.Builder(context, it.first)
-                        .setOngoing(true)
-                        .setShowWhen(false)
-                        .setSmallIcon(it.second)
-                        .setContentTitle(notificationTitle)
-                        .setContentText(notificationText)
-                        .setContentIntent(resultPendingIntent)
-                        .build()
-                )
-            }
         }
 
         private fun formatTime(lastUpdated: Long): String {
