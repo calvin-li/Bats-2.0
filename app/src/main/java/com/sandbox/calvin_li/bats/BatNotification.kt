@@ -21,14 +21,14 @@ class BatNotification : BroadcastReceiver() {
         private const val statusNotRecognized = "Status code not recognized"
         private const val statusNull = "NULL"
 
-        const val notificationID = 23
+        private const val notificationID = 23
         private const val channelId = "Battery status"
         private const val lastStatus = "Last status"
         private const val lastChange = "Last change"
 
         internal var manager: AlarmManager? = null
         internal var alarmPendingIntent: PendingIntent? = null
-        internal const val updateInterval = 1000 * 60
+        internal const val updateInterval = 1000 * 5
 
         fun displayNotification(context: Context) {
             val statusGetter: Intent =  context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))!!
@@ -118,6 +118,15 @@ class BatNotification : BroadcastReceiver() {
             }
             return status
         }
+
+        internal fun setNextAlarm() {
+            manager!!.setWindow(
+                AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                updateInterval.toLong(),
+                1000,
+                alarmPendingIntent!!
+            )
+        }
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -128,5 +137,6 @@ class BatNotification : BroadcastReceiver() {
         }
 
         displayNotification(context)
+        setNextAlarm()
     }
 }

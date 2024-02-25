@@ -22,23 +22,18 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.sandbox.calvin_li.bats.ui.theme.BatsTheme
 
 class MainActivity : ComponentActivity() {
-    private var mNotificationManager: NotificationManager? = null
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        BatNotification.displayNotification(this)
 
         val alarmIntent = Intent(applicationContext, BatNotification::class.java)
         BatNotification.alarmPendingIntent = PendingIntent.getBroadcast(applicationContext, 0, alarmIntent,
             PendingIntent.FLAG_IMMUTABLE)
 
         BatNotification.manager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        BatNotification.manager!!.setRepeating(
-            AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime(),
-            BatNotification.updateInterval.toLong(), BatNotification.alarmPendingIntent!!)
         makeToast("Bats started", this)
 
+        BatNotification.displayNotification(this)
+        BatNotification.setNextAlarm()
         finish()
     }
 
