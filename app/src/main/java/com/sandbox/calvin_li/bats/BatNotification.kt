@@ -8,6 +8,7 @@ import android.os.BatteryManager
 import android.os.SystemClock
 import android.app.NotificationChannel
 import android.content.*
+import com.sandbox.calvin_li.bats.MainActivity.Companion.makeToast
 import java.time.LocalDateTime
 
 
@@ -71,7 +72,7 @@ class BatNotification : BroadcastReceiver() {
                     .setContentIntent(resultPendingIntent)
                     .build()
             )
-
+            makeToast("Bats updated", context)
         }
 
         private fun formatTime(lastUpdated: Long): String {

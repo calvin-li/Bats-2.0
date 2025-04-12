@@ -30,10 +30,10 @@ class MainActivity : ComponentActivity() {
             PendingIntent.FLAG_IMMUTABLE)
 
         BatNotification.manager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        makeToast("Bats started", this)
-
-        BatNotification.displayNotification(this)
         BatNotification.setNextAlarm()
+        BatNotification.displayNotification(this)
+
+        makeToast("Bats started", this)
         finish()
     }
 
