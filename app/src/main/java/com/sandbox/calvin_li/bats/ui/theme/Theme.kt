@@ -1,7 +1,8 @@
 package com.sandbox.calvin_li.bats.ui.theme
 
 import android.app.Activity
-import android.os.Build
+import android.graphics.Insets
+import android.view.WindowInsets
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -37,6 +38,7 @@ private val LightColorScheme = lightColorScheme(
     */
 )
 
+@Suppress("unused")
 @Composable
 fun BatsTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -45,7 +47,7 @@ fun BatsTheme(
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+        dynamicColor -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
@@ -57,7 +59,12 @@ fun BatsTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.primary.toArgb()
+            window.decorView.setOnApplyWindowInsetsListener { view, insets ->
+                val statusBarInsets: Insets = insets.getInsets(WindowInsets.Type.statusBars())
+                view.setBackgroundColor(colorScheme.primary.toArgb())
+                view.setPadding(0, statusBarInsets.top, 0, 0)
+                insets
+            }
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = darkTheme
         }
     }

@@ -1,15 +1,17 @@
 package com.sandbox.calvin_li.bats
 
-import android.app.AlarmManager
+import android.annotation.SuppressLint
 import android.app.Notification
+import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.SystemClock
-import android.app.NotificationChannel
-import android.content.*
-import com.sandbox.calvin_li.bats.MainActivity.Companion.makeToast
-import java.time.LocalDateTime
+import androidx.core.content.edit
 
 
 class BatNotification : BroadcastReceiver() {
@@ -27,8 +29,6 @@ class BatNotification : BroadcastReceiver() {
         private const val lastStatus = "Last status"
         private const val lastChange = "Last change"
 
-        internal var manager: AlarmManager? = null
-        internal var alarmPendingIntent: PendingIntent? = null
         internal const val updateInterval = 1000 * 5
 
         fun displayNotification(context: Context) {
@@ -41,12 +41,12 @@ class BatNotification : BroadcastReceiver() {
             val voltage = getBatteryInfo(BatteryManager.EXTRA_VOLTAGE, context, statusGetter)
 
             val sharedPreferences = context.getSharedPreferences("Last charging state", Context.MODE_PRIVATE)
-            val prefEdit = sharedPreferences.edit()
-            prefEdit.putString(lastStatus, status)
-            if(sharedPreferences.getString(lastStatus, statusNull) != status){
-                prefEdit.putLong(lastChange, SystemClock.elapsedRealtime())
+            sharedPreferences.edit() {
+                putString(lastStatus, status)
+                if (sharedPreferences.getString(lastStatus, statusNull) != status) {
+                    putLong(lastChange, SystemClock.elapsedRealtime())
+                }
             }
-            prefEdit.apply()
             val time = formatTime(sharedPreferences.getLong(lastChange, SystemClock.elapsedRealtime()))
 
             val notificationManager =
@@ -72,9 +72,9 @@ class BatNotification : BroadcastReceiver() {
                     .setContentIntent(resultPendingIntent)
                     .build()
             )
-            makeToast("Bats updated", context)
         }
 
+        @SuppressLint("DefaultLocale")
         private fun formatTime(lastUpdated: Long): String {
             var time = "Time formatting error"
             val timeInMilli = SystemClock.elapsedRealtime() - lastUpdated
@@ -114,23 +114,13 @@ class BatNotification : BroadcastReceiver() {
         private fun getBatteryInfo(extra: String, context: Context, statusGetter: Intent): Int {
             val defaultValue = -1
             val status = statusGetter.getIntExtra(extra, defaultValue)
-            if (status == defaultValue) {
-                MainActivity.makeToast("Attribute $extra could not be fetched.", context)
-            }
             return status
-        }
-
-        internal fun setNextAlarm() {
-            manager!!.setWindow(
-                AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                updateInterval.toLong(),
-                1000,
-                alarmPendingIntent!!
-            )
         }
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        displayNotification(context)
+        if(intent.action == "android.intent.action.LOCKED_BOOT_COMPLETED") {
+            displayNotification(context)
+        }
     }
 }

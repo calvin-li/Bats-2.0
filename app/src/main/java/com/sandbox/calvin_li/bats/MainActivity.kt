@@ -1,20 +1,38 @@
 package com.sandbox.calvin_li.bats
 
-import android.app.AlarmManager
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.PeriodicWorkRequest
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.WorkRequest
+import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        BatNotification.displayNotification(this)
+        val workManager = WorkManager.getInstance(this)
+        val batCheckImmediate: WorkRequest = OneTimeWorkRequestBuilder<BatCheckWorker>().build()
+        val batCheckPeriodicBuilder = PeriodicWorkRequestBuilder<BatCheckWorker>(
+            PeriodicWorkRequest.MIN_PERIODIC_INTERVAL_MILLIS, TimeUnit.MILLISECONDS,
+            PeriodicWorkRequest.MIN_PERIODIC_FLEX_MILLIS, TimeUnit.MILLISECONDS
+        )
+
+        workManager.enqueue(batCheckImmediate)
+        workManager.enqueue(batCheckPeriodicBuilder.build())
+        /*
+        workManager.enqueue(batCheckPeriodicBuilder.setInitialDelay(
+            PeriodicWorkRequest.MIN_PERIODIC_INTERVAL_MILLIS/2,
+            TimeUnit.MILLISECONDS
+        ).build())
+         */
+
         makeToast("Bats started", this)
         finish()
     }
@@ -38,7 +56,7 @@ class MainActivity : ComponentActivity() {
     }
 
     companion object {
-        fun makeToast(message: String, context: Context) {
+        private fun makeToast(message: String, context: Context) {
             Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
         }
     }
