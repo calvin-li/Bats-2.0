@@ -6,6 +6,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequest
 import androidx.work.PeriodicWorkRequestBuilder
@@ -25,7 +26,11 @@ class MainActivity : ComponentActivity() {
         )
 
         workManager.enqueue(batCheckImmediate)
-        workManager.enqueue(batCheckPeriodicBuilder.build())
+        workManager.enqueueUniquePeriodicWork(
+            "batCheckPeriodic",
+            ExistingPeriodicWorkPolicy.UPDATE,
+            (batCheckPeriodicBuilder.build())
+        )
         /*
         workManager.enqueue(batCheckPeriodicBuilder.setInitialDelay(
             PeriodicWorkRequest.MIN_PERIODIC_INTERVAL_MILLIS/2,
