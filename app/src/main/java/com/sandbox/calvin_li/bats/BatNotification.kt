@@ -131,13 +131,6 @@ class BatNotification : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
-            val serviceIntent = Intent(context, MainActivity::class.java)
-            context.startService(serviceIntent)
-            return
-        }
-
         displayNotification(context)
-        setNextAlarm()
     }
 }
