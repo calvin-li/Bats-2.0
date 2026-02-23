@@ -1,7 +1,6 @@
 package com.sandbox.calvin_li.bats
 
 import android.annotation.SuppressLint
-import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -9,8 +8,10 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.drawable.Icon
 import android.os.BatteryManager
 import android.os.SystemClock
+import androidx.core.app.NotificationCompat
 import androidx.core.content.edit
 
 
@@ -29,16 +30,15 @@ class BatNotification : BroadcastReceiver() {
         private const val lastStatus = "Last status"
         private const val lastChange = "Last change"
 
-        internal const val updateInterval = 1000 * 5
-
+        @SuppressLint("DiscouragedApi")
         fun displayNotification(context: Context) {
             val statusGetter: Intent =  context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))!!
 
-            val level = getBatteryInfo(BatteryManager.EXTRA_LEVEL, context, statusGetter)
-            val plugged = plugToMessage(getBatteryInfo(BatteryManager.EXTRA_PLUGGED, context, statusGetter))
-            val status = statusToMessage(getBatteryInfo(BatteryManager.EXTRA_STATUS, context, statusGetter))
-            val temperature = getBatteryInfo(BatteryManager.EXTRA_TEMPERATURE, context, statusGetter) / 10.0
-            val voltage = getBatteryInfo(BatteryManager.EXTRA_VOLTAGE, context, statusGetter)
+            val level = getBatteryInfo(BatteryManager.EXTRA_LEVEL, statusGetter)
+            val plugged = plugToMessage(getBatteryInfo(BatteryManager.EXTRA_PLUGGED, statusGetter))
+            val status = statusToMessage(getBatteryInfo(BatteryManager.EXTRA_STATUS, statusGetter))
+            val temperature = getBatteryInfo(BatteryManager.EXTRA_TEMPERATURE, statusGetter) / 10.0
+            val voltage = getBatteryInfo(BatteryManager.EXTRA_VOLTAGE, statusGetter)
 
             val sharedPreferences = context.getSharedPreferences("Last charging state", Context.MODE_PRIVATE)
             sharedPreferences.edit() {
@@ -54,7 +54,8 @@ class BatNotification : BroadcastReceiver() {
             notificationManager.createNotificationChannel(
                 NotificationChannel(channelId, channelId, NotificationManager.IMPORTANCE_LOW))
 
-            val icon = context.resources.getIdentifier("a$level", "mipmap", context.packageName)
+            val iconRes: Int = context.resources.getIdentifier("a$level", "mipmap", context.packageName)
+            val icon: Icon = Icon.createWithResource(context, iconRes)
             val notificationTitle = temperature.toString() + "\u00b0C" + " • " + voltage + "mV"
             val notificationText = "$status$plugged for $time"
             val resultPendingIntent =
@@ -63,10 +64,12 @@ class BatNotification : BroadcastReceiver() {
 
             notificationManager.notify(
                 notificationID,
-                Notification.Builder(context, channelId)
+                NotificationCompat.Builder(context, channelId)
                     .setOngoing(true)
                     .setShowWhen(false)
-                    .setSmallIcon(icon)
+                    .setBadgeIconType(NotificationCompat.BADGE_ICON_SMALL)
+                    .setSmallIcon(iconRes)
+                    .setLargeIcon(icon)
                     .setContentTitle(notificationTitle)
                     .setContentText(notificationText)
                     .setContentIntent(resultPendingIntent)
@@ -111,7 +114,7 @@ class BatNotification : BroadcastReceiver() {
             }
         }
 
-        private fun getBatteryInfo(extra: String, context: Context, statusGetter: Intent): Int {
+        private fun getBatteryInfo(extra: String, statusGetter: Intent): Int {
             val defaultValue = -1
             val status = statusGetter.getIntExtra(extra, defaultValue)
             return status

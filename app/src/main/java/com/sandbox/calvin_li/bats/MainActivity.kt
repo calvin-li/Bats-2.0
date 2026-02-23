@@ -31,12 +31,6 @@ class MainActivity : ComponentActivity() {
             ExistingPeriodicWorkPolicy.UPDATE,
             (batCheckPeriodicBuilder.build())
         )
-        /*
-        workManager.enqueue(batCheckPeriodicBuilder.setInitialDelay(
-            PeriodicWorkRequest.MIN_PERIODIC_INTERVAL_MILLIS/2,
-            TimeUnit.MILLISECONDS
-        ).build())
-         */
 
         makeToast("Bats started", this)
         finish()
